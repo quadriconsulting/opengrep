@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}DevSecure Scans - Security Scan Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-search me-2 text-primary"></i>Security Scans</h1>
+                <p class="text-muted mb-0">Manage and monitor comprehensive security scanning operations</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="import-project-btn">
+                    <i class="fas fa-file-import me-2"></i>Import Project
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newScanModal">
+                    <i class="fas fa-plus me-2"></i>New Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-play fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="total-scans">0</h3>
+                <p class="text-muted mb-0 small">Total Scans</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-sync-alt fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="running-scans">0</h3>
+                <p class="text-muted mb-0 small">Running</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="completed-scans">0</h3>
+                <p class="text-muted mb-0 small">Completed</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-danger mb-2">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="failed-scans">0</h3>
+                <p class="text-muted mb-0 small">Failed</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="avg-duration">0</h3>
+                <p class="text-muted mb-0 small">Avg Duration</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-secondary mb-2">
+                    <i class="fas fa-bug fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="total-findings">0</h3>
+                <p class="text-muted mb-0 small">Total Findings</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan Management Interface -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-scans-tab" data-bs-toggle="tab" 
+                                data-bs-target="#active-scans" type="button" role="tab">
+                            <i class="fas fa-play me-2"></i>Active Scans
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scan-history-tab" data-bs-toggle="tab" 
+                                data-bs-target="#scan-history" type="button" role="tab">
+                            <i class="fas fa-history me-2"></i>Scan History
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scheduled-scans-tab" data-bs-toggle="tab" 
+                                data-bs-target="#scheduled-scans" type="button" role="tab">
+                            <i class="fas fa-calendar me-2"></i>Scheduled Scans
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scan-templates-tab" data-bs-toggle="tab" 
+                                data-bs-target="#scan-templates" type="button" role="tab">
+                            <i class="fas fa-copy me-2"></i>Templates
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Active Scans -->
+                    <div class="tab-pane fade show active" id="active-scans" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Currently Running Scans</h6>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" id="refresh-active-scans">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" id="stop-all-scans">
+                                    <i class="fas fa-stop me-1"></i>Stop All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="active-scans-list">
+                            <!-- Active scans will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Scan History -->
+                    <div class="tab-pane fade" id="scan-history" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Scan History</h6>
+                            <div class="d-flex gap-2">
+                                <input type="date" class="form-control form-control-sm" id="history-date-filter" 
+                                       style="width: auto;">
+                                <select class="form-select form-select-sm" id="history-status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" id="export-history">
+                                    <i class="fas fa-download me-1"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="scan-history-list">
+                            <!-- Scan history will be populated here -->
+                        </div>
+                        
+                        <!-- Pagination for history -->
+                        <nav class="mt-3">
+                            <ul class="pagination pagination-sm justify-content-center" id="history-pagination">
+                                <!-- Pagination will be populated here -->
+                            </ul>
+                        </nav>
+                    </div>
+                    
+                    <!-- Scheduled Scans -->
+                    <div class="tab-pane fade" id="scheduled-scans" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Scheduled Scans</h6>
+                            <button class="btn btn-sm btn-primary" id="create-schedule-btn">
+                                <i class="fas fa-plus me-1"></i>Create Schedule
+                            </button>
+                        </div>
+                        
+                        <div id="scheduled-scans-list">
+                            <!-- Scheduled scans will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Scan Templates -->
+                    <div class="tab-pane fade" id="scan-templates" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Scan Templates</h6>
+                            <button class="btn btn-sm btn-primary" id="create-template-btn">
+                                <i class="fas fa-plus me-1"></i>Create Template
+                            </button>
+                        </div>
+                        
+                        <div id="scan-templates-list">
+                            <!-- Scan templates will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Scan Modal -->
+<div class="modal fade" id="newScanModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Create New Security Scan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="new-scan-form">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Scan Name</label>
+                            <input type="text" class="form-control" id="scan-name" 
+                                   placeholder="e.g., Production Security Audit" required>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <label class="form-label">Project Path</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="new-scan-path" 
+                                       placeholder="/path/to/project" required>
+                                <button class="btn btn-outline-secondary" type="button" id="browse-path-btn">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">Scan Template</label>
+                            <select class="form-select" id="scan-template">
+                                <option value="">Custom Scan</option>
+                                <option value="quick">Quick Scan</option>
+                                <option value="comprehensive">Comprehensive</option>
+                                <option value="security-focused">Security Focused</option>
+                                <option value="compliance">Compliance Check</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Security Domains</label>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="SAST" 
+                                               id="new-scan-sast" checked>
+                                        <label class="form-check-label" for="new-scan-sast">
+                                            <i class="fas fa-code me-1"></i>SAST (Static Analysis)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="SCA" 
+                                               id="new-scan-sca" checked>
+                                        <label class="form-check-label" for="new-scan-sca">
+                                            <i class="fas fa-cube me-1"></i>SCA (Dependencies)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="SECRETS" 
+                                               id="new-scan-secrets" checked>
+                                        <label class="form-check-label" for="new-scan-secrets">
+                                            <i class="fas fa-key me-1"></i>Secrets Detection
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="IAC" 
+                                               id="new-scan-iac" checked>
+                                        <label class="form-check-label" for="new-scan-iac">
+                                            <i class="fas fa-cloud me-1"></i>IaC (Infrastructure)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="CONTAINERS" 
+                                               id="new-scan-containers" checked>
+                                        <label class="form-check-label" for="new-scan-containers">
+                                            <i class="fab fa-docker me-1"></i>Container Security
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Priority</label>
+                            <select class="form-select" id="scan-priority">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="auto-fix-enabled" checked>
+                                <label class="form-check-label" for="auto-fix-enabled">
+                                    Enable Auto-Fix
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Additional Options</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="incremental-scan">
+                                        <label class="form-check-label" for="incremental-scan">
+                                            Incremental Scan
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="correlation-analysis" checked>
+                                        <label class="form-check-label" for="correlation-analysis">
+                                            Correlation Analysis
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="generate-report" checked>
+                                        <label class="form-check-label" for="generate-report">
+                                            Generate Report
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="start-new-scan-btn">
+                    <i class="fas fa-play me-2"></i>Start Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scan Details Modal -->
+<div class="modal fade" id="scanDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>Scan Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="scan-details-content">
+                    <!-- Scan details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="view-findings-btn" style="display: none;">
+                    <i class="fas fa-bug me-2"></i>View Findings
+                </button>
+                <button type="button" class="btn btn-danger" id="stop-scan-btn" style="display: none;">
+                    <i class="fas fa-stop me-2"></i>Stop Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/scans.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,150 @@
+{
+  "enhanced_opengrep_config": {
+    "version": "1.0.0",
+    "description": "Enhanced Opengrep Configuration with 80% Auto-Fix Coverage"
+  },
+  
+  "ai_configuration": {
+    "provider": "openai",
+    "openai_api_key": "${OPENAI_API_KEY}",
+    "model": "gpt-4o",
+    "temperature": 0.1,
+    "max_tokens": 2000,
+    "timeout": 30,
+    "fallback_provider": "anthropic",
+    "anthropic_api_key": "${ANTHROPIC_API_KEY}"
+  },
+  
+  "github_integration": {
+    "enabled": true,
+    "github_token": "${GITHUB_TOKEN}",
+    "repo_owner": "${GITHUB_REPO_OWNER}",
+    "repo_name": "${GITHUB_REPO_NAME}",
+    "base_branch": "main",
+    "pr_prefix": "security-fix",
+    "auto_assign_reviewers": true,
+    "default_reviewers": ["security-team", "lead-developer"],
+    "labels": {
+      "critical": ["security", "critical", "urgent"],
+      "high": ["security", "high-priority"],
+      "medium": ["security", "improvement"],
+      "low": ["security", "maintenance"]
+    }
+  },
+  
+  "auto_fix_settings": {
+    "target_coverage": 80.0,
+    "confidence_thresholds": {
+      "conservative": 0.9,
+      "moderate": 0.7,
+      "aggressive": 0.5
+    },
+    "quality_by_criticality": {
+      "critical": "conservative",
+      "high": "moderate", 
+      "medium": "aggressive",
+      "low": "aggressive"
+    },
+    "max_fixes_per_pr": 10,
+    "enable_test_generation": true,
+    "enable_documentation_updates": true
+  },
+  
+  "pr_batching_strategy": {
+    "immediate_priorities": ["critical"],
+    "daily_priorities": ["high", "medium"],
+    "weekly_priorities": ["low", "info"],
+    "batch_by_module": true,
+    "max_batch_size": 10,
+    "merge_timeout_hours": {
+      "critical": 4,
+      "high": 24,
+      "medium": 72,
+      "low": 168
+    }
+  },
+  
+  "security_modules": [
+    {
+      "name": "Authentication & Authorization",
+      "file_patterns": ["**/auth/**", "**/login/**", "**/security/**"],
+      "keywords": ["auth", "login", "session", "jwt", "token"],
+      "reviewers": ["security-team", "auth-expert"]
+    },
+    {
+      "name": "Data Validation & Injection Prevention",
+      "file_patterns": ["**/models/**", "**/db/**", "**/api/**"],
+      "keywords": ["sql", "injection", "validate", "sanitize"],
+      "reviewers": ["security-team", "db-expert"]
+    },
+    {
+      "name": "Cross-Site Scripting (XSS) Prevention", 
+      "file_patterns": ["**/templates/**", "**/views/**", "**/frontend/**"],
+      "keywords": ["xss", "innerHTML", "encode", "escape"],
+      "reviewers": ["security-team", "frontend-expert"]
+    },
+    {
+      "name": "Cryptography & Secrets Management",
+      "file_patterns": ["**/crypto/**", "**/keys/**", "**/config/**"],
+      "keywords": ["crypto", "encrypt", "secret", "key", "password"],
+      "reviewers": ["security-team", "crypto-expert"]
+    }
+  ],
+  
+  "learning_system": {
+    "enabled": true,
+    "database_path": "fix_effectiveness.db",
+    "analysis_window_days": 30,
+    "min_samples_for_learning": 10,
+    "confidence_calibration_enabled": true,
+    "auto_rule_improvement": true,
+    "feedback_collection": {
+      "pr_comments": true,
+      "merge_metrics": true,
+      "revert_tracking": true,
+      "developer_ratings": true
+    }
+  },
+  
+  "reporting": {
+    "formats": ["json", "sarif", "html", "text"],
+    "include_fix_details": true,
+    "include_learning_insights": true,
+    "include_metrics": true,
+    "export_path": "./reports/",
+    "timestamp_format": "ISO8601"
+  },
+  
+  "performance": {
+    "max_concurrent_fixes": 5,
+    "ai_request_timeout": 30,
+    "github_api_timeout": 15,
+    "batch_processing": true,
+    "cache_fix_patterns": true,
+    "cache_ttl_hours": 24
+  },
+  
+  "compliance": {
+    "frameworks": ["OWASP", "CWE", "NIST", "SOC2"],
+    "required_metadata": ["cwe", "owasp", "severity"],
+    "audit_logging": true,
+    "compliance_reporting": true
+  },
+  
+  "monitoring": {
+    "enabled": true,
+    "metrics_endpoint": "http://localhost:9090/metrics",
+    "log_level": "INFO",
+    "alert_on_critical": true,
+    "alert_webhook": "${ALERT_WEBHOOK_URL}",
+    "performance_monitoring": true
+  },
+  
+  "development": {
+    "debug_mode": false,
+    "mock_ai_responses": false,
+    "skip_github_api": false,
+    "test_mode": false,
+    "verbose_logging": false
+  }
+}

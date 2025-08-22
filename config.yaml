@@ -1,0 +1,164 @@
+# Enhanced Opengrep SAST Configuration
+# ====================================
+
+# Core Configuration
+opengrep:
+  binary_path: "opengrep"
+  rules_path: "opengrep-rules"
+  timeout: 300  # seconds
+  max_parallel_scans: 4
+
+# AI Fix Generation
+ai_fix_generator:
+  model_name: "microsoft/CodeT5-base"  # Lightweight model for fast inference
+  # Alternative models for better results (requires more resources):
+  # model_name: "microsoft/CodeT5-large"
+  # model_name: "Salesforce/codet5p-770m-py"
+  
+  confidence_thresholds:
+    high: 0.8
+    medium: 0.6
+    low: 0.4
+  
+  max_context_length: 512
+  generation_temperature: 0.7
+  
+  # Enable/disable AI features
+  enable_ai_fixes: true
+  fallback_to_patterns: true
+
+# Code Criticality Analysis
+code_criticality:
+  critical_keywords:
+    - "payment"
+    - "billing" 
+    - "auth"
+    - "login"
+    - "password"
+    - "token"
+    - "encrypt"
+    - "admin"
+    - "privilege"
+  
+  critical_paths:
+    - "*/auth/*"
+    - "*/payment/*" 
+    - "*/admin/*"
+    - "*/security/*"
+  
+  test_paths:  # Paths with lower criticality
+    - "*/test/*"
+    - "*/tests/*"
+    - "*/mock/*"
+    - "*/demo/*"
+
+# Smart PR Batching
+pr_batching:
+  max_fixes_per_pr: 10
+  max_review_time_minutes: 120
+  
+  batch_strategies:
+    critical: "individual"      # One PR per critical vulnerability
+    high: "by_module"          # Group by module/package
+    medium: "by_type"          # Group by vulnerability type  
+    low: "combined"            # Combine multiple types
+  
+  require_security_review:
+    - "CRITICAL"
+    - "HIGH"
+
+# GitHub Integration
+github:
+  api_base_url: "https://api.github.com"
+  default_base_branch: "main"
+  
+  pr_settings:
+    auto_assign_reviewers: true
+    enable_auto_merge: false  # Set to true for low-risk fixes
+    delete_branch_after_merge: true
+  
+  labels:
+    security: "security"
+    autofix: "auto-fix" 
+    severity_prefix: "severity-"
+    module_prefix: "module-"
+    review_required: "security-review-required"
+  
+  reviewers:
+    security_team: ["security-team", "lead-security-engineer"]
+    default_reviewers: ["team-lead", "senior-developer"]
+
+# Learning System
+learning:
+  metrics_file: "fix_effectiveness_metrics.json"
+  learning_rate: 0.1
+  min_samples_for_learning: 5
+  
+  effectiveness_weights:
+    success_rate: 0.7
+    false_positive_penalty: 0.3
+  
+  confidence_adjustment:
+    enable: true
+    adjustment_threshold: 0.2  # Adjust confidence if accuracy differs by this much
+
+# Reporting
+reporting:
+  output_formats: ["json", "html", "sarif"]
+  include_learning_insights: true
+  include_pr_links: true
+  
+  summary_sections:
+    - "scan_summary"
+    - "fix_coverage"
+    - "pr_automation"
+    - "learning_insights" 
+    - "recommendations"
+
+# Security Configuration
+security:
+  max_ai_model_size: "1GB"  # Prevent loading huge models
+  validate_fixes: true      # Run basic validation on generated fixes
+  sandbox_fix_generation: false  # Enable for production environments
+  
+  allowed_file_extensions:
+    - ".py"
+    - ".js" 
+    - ".ts"
+    - ".java"
+    - ".php"
+    - ".rb"
+    - ".go"
+    - ".rs"
+    - ".cpp"
+    - ".c"
+    - ".cs"
+    - ".scala"
+    - ".kt"
+
+# Performance Settings
+performance:
+  max_file_size_mb: 10
+  max_files_per_scan: 10000
+  cache_ai_results: true
+  cache_duration_hours: 24
+  
+  parallel_processing:
+    enable: true
+    max_workers: 4
+    chunk_size: 100
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "enhanced_sast.log"
+  max_size_mb: 100
+  backup_count: 5
+
+# Development Settings
+development:
+  debug_mode: false
+  save_intermediate_results: false
+  mock_ai_responses: false  # For testing without AI models
+  dry_run_pr_creation: false  # Test PR creation without actually creating PRs

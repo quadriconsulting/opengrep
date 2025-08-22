@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}DevSecure Auto-Fix - AI-Powered Security Remediation{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-magic me-2 text-success"></i>Auto-Fix Management</h1>
+                <p class="text-muted mb-0">AI-powered automatic security fix generation and PR management</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-info me-2" id="refresh-autofix-btn">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+                <button class="btn btn-primary" id="batch-fix-btn">
+                    <i class="fas fa-layer-group me-2"></i>Create Batch Fix
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-Fix Metrics -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="fixes-applied">0</h3>
+                <p class="text-muted mb-0 small">Fixes Applied</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="fixes-pending">0</h3>
+                <p class="text-muted mb-0 small">Pending Fixes</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-code-branch fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="active-prs">0</h3>
+                <p class="text-muted mb-0 small">Active PRs</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-merge fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="merged-prs">0</h3>
+                <p class="text-muted mb-0 small">Merged PRs</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-secondary mb-2">
+                    <i class="fas fa-percentage fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="success-rate">0%</h3>
+                <p class="text-muted mb-0 small">Success Rate</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-dark mb-2">
+                    <i class="fas fa-brain fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="ai-confidence">0%</h3>
+                <p class="text-muted mb-0 small">Avg AI Confidence</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Tabs -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-fixes-tab" data-bs-toggle="tab" 
+                                data-bs-target="#active-fixes" type="button" role="tab">
+                            <i class="fas fa-cog me-2"></i>Active Fixes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pr-management-tab" data-bs-toggle="tab" 
+                                data-bs-target="#pr-management" type="button" role="tab">
+                            <i class="fas fa-code-branch me-2"></i>PR Management
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="fix-history-tab" data-bs-toggle="tab" 
+                                data-bs-target="#fix-history" type="button" role="tab">
+                            <i class="fas fa-history me-2"></i>Fix History
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="effectiveness-tab" data-bs-toggle="tab" 
+                                data-bs-target="#effectiveness" type="button" role="tab">
+                            <i class="fas fa-chart-line me-2"></i>Effectiveness
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Active Fixes Tab -->
+                    <div class="tab-pane fade show active" id="active-fixes" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Currently Processing Auto-Fixes</h6>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="active-status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="queued">Queued</option>
+                                    <option value="analyzing">Analyzing</option>
+                                    <option value="generating">Generating Fix</option>
+                                    <option value="testing">Testing</option>
+                                    <option value="creating_pr">Creating PR</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-danger" id="cancel-all-btn">
+                                    <i class="fas fa-stop me-1"></i>Cancel All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Active fixes list -->
+                        <div id="active-fixes-list">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- PR Management Tab -->
+                    <div class="tab-pane fade" id="pr-management" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Pull Request Management</h6>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="pr-status-filter">
+                                    <option value="">All PRs</option>
+                                    <option value="open">Open</option>
+                                    <option value="merged">Merged</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" id="sync-prs-btn">
+                                    <i class="fas fa-sync me-1"></i>Sync with GitHub
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- PR list -->
+                        <div id="pr-management-list">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Fix History Tab -->
+                    <div class="tab-pane fade" id="fix-history" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Auto-Fix History</h6>
+                            <div class="d-flex gap-2">
+                                <input type="date" class="form-control form-control-sm" id="history-date-from" 
+                                       style="width: auto;">
+                                <input type="date" class="form-control form-control-sm" id="history-date-to" 
+                                       style="width: auto;">
+                                <select class="form-select form-select-sm" id="history-outcome-filter">
+                                    <option value="">All Outcomes</option>
+                                    <option value="success">Success</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- History list -->
+                        <div id="fix-history-list">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Effectiveness Tab -->
+                    <div class="tab-pane fade" id="effectiveness" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Fix Success Rate Trends</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="success-rate-chart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">AI Confidence Distribution</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="confidence-chart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Fix Categories Performance</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="categories-chart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Time to Resolution</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="resolution-time-chart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fix Details Modal -->
+<div class="modal fade" id="fixDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-code me-2"></i>Auto-Fix Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="fix-details-content">
+                    <!-- Fix details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="retry-fix-btn" style="display: none;">
+                    <i class="fas fa-redo me-2"></i>Retry Fix
+                </button>
+                <button type="button" class="btn btn-danger" id="cancel-fix-btn" style="display: none;">
+                    <i class="fas fa-stop me-2"></i>Cancel Fix
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Fix Modal -->
+<div class="modal fade" id="batchFixModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-layer-group me-2"></i>Create Batch Fix
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="batch-fix-form">
+                    <div class="mb-3">
+                        <label class="form-label">Fix Selection Criteria</label>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <select class="form-select" id="batch-severity-filter">
+                                    <option value="">All Severities</option>
+                                    <option value="CRITICAL" selected>Critical</option>
+                                    <option value="HIGH">High</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="LOW">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <select class="form-select" id="batch-domain-filter">
+                                    <option value="">All Domains</option>
+                                    <option value="SAST">SAST</option>
+                                    <option value="SCA">SCA</option>
+                                    <option value="SECRETS">Secrets</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Batch Configuration</label>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small">Max Findings per PR</label>
+                                <input type="number" class="form-control" id="batch-max-findings" 
+                                       value="10" min="1" max="50">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small">AI Confidence Threshold</label>
+                                <select class="form-select" id="batch-confidence-threshold">
+                                    <option value="LOW">Low (60%+)</option>
+                                    <option value="MEDIUM" selected>Medium (75%+)</option>
+                                    <option value="HIGH">High (90%+)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="batch-auto-merge" checked>
+                            <label class="form-check-label" for="batch-auto-merge">
+                                Auto-merge PRs with high confidence fixes
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="batch-smart-grouping" checked>
+                            <label class="form-check-label" for="batch-smart-grouping">
+                                Smart grouping by file/module
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong id="batch-preview-count">0</strong> findings match your criteria and will be processed.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="start-batch-fix-btn">
+                    <i class="fas fa-play me-2"></i>Start Batch Fix
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/autofix.js') }}"></script>
+{% endblock %}

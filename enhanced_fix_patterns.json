@@ -1,0 +1,269 @@
+{
+  "sql_injection_patterns": {
+    "python": [
+      {
+        "name": "format_string_sql",
+        "pattern": "cursor\\.execute\\(f[\"'].*?\\{.*?\\}.*?[\"']\\)",
+        "fix_template": "cursor.execute(\"{{QUERY}}\", ({{PARAMS}},))",
+        "confidence": "HIGH",
+        "description": "Replace f-string SQL with parameterized queries"
+      },
+      {
+        "name": "concatenated_sql",
+        "pattern": "cursor\\.execute\\(.*?\\+.*?\\)",
+        "fix_template": "cursor.execute(\"{{QUERY}}\", {{PARAMS}})",
+        "confidence": "HIGH",
+        "description": "Replace string concatenation with parameterized queries"
+      },
+      {
+        "name": "percent_format_sql",
+        "pattern": "cursor\\.execute\\(.*?%.*?%.*?\\)",
+        "fix_template": "cursor.execute(\"{{QUERY}}\", {{PARAMS}})",
+        "confidence": "MEDIUM",
+        "description": "Replace % formatting with parameterized queries"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "template_literal_sql",
+        "pattern": "query\\s*=\\s*`.*?\\$\\{.*?\\}.*?`",
+        "fix_template": "query = \"{{QUERY}}\"; params = [{{PARAMS}}]",
+        "confidence": "HIGH",
+        "description": "Replace template literals with parameterized queries"
+      },
+      {
+        "name": "concatenated_sql_js",
+        "pattern": "query\\s*=\\s*.*?\\+.*?",
+        "fix_template": "query = \"{{QUERY}}\"; params = [{{PARAMS}}]", 
+        "confidence": "MEDIUM",
+        "description": "Replace string concatenation with parameterized queries"
+      }
+    ],
+    "java": [
+      {
+        "name": "statement_execute_query",
+        "pattern": "statement\\.executeQuery\\(.*?\\+.*?\\)",
+        "fix_template": "PreparedStatement pstmt = connection.prepareStatement(\"{{QUERY}}\"); pstmt.setString(1, {{PARAM}}); pstmt.executeQuery()",
+        "confidence": "HIGH",
+        "description": "Replace Statement with PreparedStatement"
+      }
+    ]
+  },
+  
+  "xss_patterns": {
+    "javascript": [
+      {
+        "name": "innerHTML_assignment",
+        "pattern": "\\.innerHTML\\s*=\\s*.*?",
+        "fix_template": ".textContent = {{VALUE}} // or use DOMPurify.sanitize({{VALUE}})",
+        "confidence": "MEDIUM",
+        "description": "Replace innerHTML with textContent or sanitization"
+      },
+      {
+        "name": "document_write",
+        "pattern": "document\\.write\\(.*?\\)",
+        "fix_template": "// Use safe DOM manipulation instead of document.write",
+        "confidence": "HIGH",
+        "description": "Avoid document.write for dynamic content"
+      }
+    ],
+    "python": [
+      {
+        "name": "render_template_string",
+        "pattern": "render_template_string\\(f[\"'].*?\\{.*?\\}.*?[\"'].*?\\)",
+        "fix_template": "render_template_string(\"{{TEMPLATE}}\", {{CONTEXT}})",
+        "confidence": "MEDIUM",
+        "description": "Use proper template context instead of f-strings"
+      },
+      {
+        "name": "format_in_template",
+        "pattern": "\\.format\\(.*?request\\.",
+        "fix_template": "# Use template context: render_template('template.html', data={{DATA}})",
+        "confidence": "MEDIUM",  
+        "description": "Avoid string formatting with user input in templates"
+      }
+    ]
+  },
+  
+  "crypto_weakness_patterns": {
+    "python": [
+      {
+        "name": "md5_usage",
+        "pattern": "hashlib\\.md5\\(",
+        "fix_template": "hashlib.sha256(",
+        "confidence": "HIGH",
+        "description": "Replace MD5 with SHA-256"
+      },
+      {
+        "name": "sha1_usage", 
+        "pattern": "hashlib\\.sha1\\(",
+        "fix_template": "hashlib.sha256(",
+        "confidence": "HIGH",
+        "description": "Replace SHA-1 with SHA-256"
+      },
+      {
+        "name": "des_encryption",
+        "pattern": "DES\\.",
+        "fix_template": "AES.  # Use AES encryption instead of DES",
+        "confidence": "HIGH",
+        "description": "Replace DES with AES encryption"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "md5_crypto",
+        "pattern": "crypto\\.createHash\\([\"']md5[\"']\\)",
+        "fix_template": "crypto.createHash('sha256')",
+        "confidence": "HIGH",
+        "description": "Replace MD5 with SHA-256"
+      },
+      {
+        "name": "sha1_crypto",
+        "pattern": "crypto\\.createHash\\([\"']sha1[\"']\\)",
+        "fix_template": "crypto.createHash('sha256')",
+        "confidence": "HIGH",
+        "description": "Replace SHA-1 with SHA-256"
+      }
+    ]
+  },
+  
+  "auth_bypass_patterns": {
+    "python": [
+      {
+        "name": "missing_auth_decorator",
+        "pattern": "@app\\.route\\(.*?\\)\\s*\\ndef\\s+(?!.*@.*required)",
+        "fix_template": "@app.route({{ROUTE}})\\n@login_required\\ndef {{FUNCTION}}",
+        "confidence": "MEDIUM",
+        "description": "Add authentication decorator to protected endpoints"
+      },
+      {
+        "name": "admin_without_auth",
+        "pattern": "@app\\.route\\([\"']/admin.*?[\"']\\)\\s*\\ndef",
+        "fix_template": "@app.route({{ROUTE}})\\n@admin_required\\ndef {{FUNCTION}}",
+        "confidence": "HIGH",
+        "description": "Add admin authentication to admin endpoints"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "express_admin_route",
+        "pattern": "app\\.(get|post|put|delete)\\([\"']/admin.*?[\"']",
+        "fix_template": "app.{{METHOD}}({{ROUTE}}, requireAuth, requireAdmin, {{HANDLER}})",
+        "confidence": "MEDIUM", 
+        "description": "Add authentication middleware to admin routes"
+      }
+    ]
+  },
+  
+  "csrf_patterns": {
+    "python": [
+      {
+        "name": "post_without_csrf",
+        "pattern": "@app\\.route\\(.*?methods.*?POST.*?\\)\\s*\\ndef\\s+(?!.*csrf)",
+        "fix_template": "@app.route({{ROUTE}}, methods={{METHODS}})\\n@csrf.protect\\ndef {{FUNCTION}}",
+        "confidence": "MEDIUM",
+        "description": "Add CSRF protection to POST endpoints"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "express_post_no_csrf",
+        "pattern": "app\\.post\\([\"'].*?[\"'], (?!.*csrf)",
+        "fix_template": "app.post({{ROUTE}}, csrfProtection, {{HANDLER}})",
+        "confidence": "MEDIUM",
+        "description": "Add CSRF middleware to POST routes"
+      }
+    ]
+  },
+  
+  "command_injection_patterns": {
+    "python": [
+      {
+        "name": "os_system_call",
+        "pattern": "os\\.system\\(.*?input.*?\\)",
+        "fix_template": "subprocess.run([{{COMMAND}}, {{ARGS}}], check=True, capture_output=True)",
+        "confidence": "HIGH",
+        "description": "Replace os.system with subprocess.run for safety"
+      },
+      {
+        "name": "subprocess_shell_true",
+        "pattern": "subprocess\\.(run|call|check_output)\\(.*?shell=True.*?\\)",
+        "fix_template": "subprocess.{{METHOD}}([{{COMMAND}}, {{ARGS}}], check=True)",
+        "confidence": "HIGH",
+        "description": "Avoid shell=True, use array of arguments instead"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "child_process_exec",
+        "pattern": "exec\\(.*?\\+.*?\\)",
+        "fix_template": "execFile({{COMMAND}}, [{{ARGS}}], {{OPTIONS}})",
+        "confidence": "HIGH",
+        "description": "Replace exec with execFile for parameterized commands"
+      }
+    ]
+  },
+  
+  "path_traversal_patterns": {
+    "python": [
+      {
+        "name": "open_user_input",
+        "pattern": "open\\(.*?request\\.",
+        "fix_template": "# Validate and sanitize path\\nfrom pathlib import Path\\nsafe_path = Path({{BASE_DIR}}) / Path({{USER_INPUT}}).name\\nopen(safe_path, {{MODE}})",
+        "confidence": "MEDIUM",
+        "description": "Validate file paths to prevent directory traversal"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "fs_read_user_input",
+        "pattern": "fs\\.readFile\\(.*?req\\.",
+        "fix_template": "const path = require('path'); const safePath = path.join({{BASE_DIR}}, path.basename({{USER_INPUT}})); fs.readFile(safePath, {{OPTIONS}})",
+        "confidence": "MEDIUM",
+        "description": "Sanitize file paths to prevent directory traversal"
+      }
+    ]
+  },
+  
+  "insecure_random_patterns": {
+    "python": [
+      {
+        "name": "random_module",
+        "pattern": "random\\.(randint|choice|random)\\(",
+        "fix_template": "secrets.SystemRandom().{{METHOD}}(",
+        "confidence": "HIGH",
+        "description": "Use secrets module for cryptographically secure random numbers"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "math_random",
+        "pattern": "Math\\.random\\(\\)",
+        "fix_template": "crypto.randomBytes({{SIZE}}).toString('hex')",
+        "confidence": "HIGH",
+        "description": "Use crypto.randomBytes for secure random generation"
+      }
+    ]
+  },
+  
+  "hardcoded_secrets_patterns": {
+    "python": [
+      {
+        "name": "api_key_assignment",
+        "pattern": "(api_key|secret_key|password)\\s*=\\s*[\"'][^\"']+[\"']",
+        "fix_template": "{{VAR_NAME}} = os.getenv('{{ENV_VAR_NAME}}')",
+        "confidence": "HIGH", 
+        "description": "Move hardcoded secrets to environment variables"
+      }
+    ],
+    "javascript": [
+      {
+        "name": "api_key_js",
+        "pattern": "(apiKey|secretKey|password)\\s*=\\s*[\"'][^\"']+[\"']",
+        "fix_template": "{{VAR_NAME}} = process.env.{{ENV_VAR_NAME}}",
+        "confidence": "HIGH",
+        "description": "Move hardcoded secrets to environment variables"
+      }
+    ]
+  }
+}

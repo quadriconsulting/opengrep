@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}DevSecure Dashboard - Real-time Security Insights{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-tachometer-alt me-2 text-primary"></i>Security Dashboard</h1>
+                <p class="text-muted mb-0">Real-time unified security platform monitoring</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickScanModal">
+                    <i class="fas fa-search me-2"></i>Quick Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-bug fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="total-findings">0</h3>
+                <p class="text-muted mb-0 small">Total Findings</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-danger mb-2">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="critical-findings">0</h3>
+                <p class="text-muted mb-0 small">Critical</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-exclamation fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="high-findings">0</h3>
+                <p class="text-muted mb-0 small">High</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-info-circle fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="medium-findings">0</h3>
+                <p class="text-muted mb-0 small">Medium</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-magic fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="auto-fixed">0</h3>
+                <p class="text-muted mb-0 small">Auto-Fixed</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2 col-md-4 col-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-secondary mb-2">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="pending-fixes">0</h3>
+                <p class="text-muted mb-0 small">Pending Fixes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Visualizations -->
+<div class="row mb-4">
+    <!-- Security Domain Overview -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i>Security Domains
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="domains-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Severity Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2 text-warning"></i>Severity Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="severity-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scan Timeline -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2 text-success"></i>Scan Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="timeline-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Current Scans -->
+<div class="row mb-4">
+    <!-- Active Scans -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-sync-alt me-2 text-info"></i>Active Scans
+                </h5>
+                <span class="badge bg-info" id="active-scans-count">0</span>
+            </div>
+            <div class="card-body">
+                <div id="active-scans-list">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-search fa-3x mb-3 opacity-50"></i>
+                        <p class="mb-0">No active scans</p>
+                        <small>Click "Quick Scan" to start a new scan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Findings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2 text-secondary"></i>Recent Findings
+                </h5>
+                <a href="/findings" class="btn btn-sm btn-outline-secondary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div id="recent-findings-list">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-bug fa-3x mb-3 opacity-50"></i>
+                        <p class="mb-0">No recent findings</p>
+                        <small>Run a security scan to see findings here</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server me-2 text-success"></i>System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="status-indicator bg-success me-3"></div>
+                            <div>
+                                <h6 class="mb-0">SAST Engine</h6>
+                                <small class="text-muted">Enhanced Opengrep Ready</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="status-indicator bg-success me-3"></div>
+                            <div>
+                                <h6 class="mb-0">SCA Scanner</h6>
+                                <small class="text-muted">Dependency Analysis Ready</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="status-indicator bg-success me-3"></div>
+                            <div>
+                                <h6 class="mb-0">Secrets Detection</h6>
+                                <small class="text-muted">Pattern Matching Active</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="status-indicator bg-success me-3"></div>
+                            <div>
+                                <h6 class="mb-0">AI Auto-Fix</h6>
+                                <small class="text-muted">GPT-4 Integration Active</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Scan Modal -->
+<div class="modal fade" id="quickScanModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>Quick Security Scan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quick-scan-form">
+                    <div class="mb-3">
+                        <label for="project-path" class="form-label">Project Path</label>
+                        <input type="text" class="form-control" id="project-path" 
+                               placeholder="/path/to/your/project" required>
+                        <div class="form-text">Absolute path to the project directory to scan</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Security Domains</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="SAST" 
+                                           id="domain-sast" checked>
+                                    <label class="form-check-label" for="domain-sast">
+                                        <i class="fas fa-code me-1"></i>SAST (Static Analysis)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="SCA" 
+                                           id="domain-sca" checked>
+                                    <label class="form-check-label" for="domain-sca">
+                                        <i class="fas fa-cube me-1"></i>SCA (Dependencies)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="SECRETS" 
+                                           id="domain-secrets" checked>
+                                    <label class="form-check-label" for="domain-secrets">
+                                        <i class="fas fa-key me-1"></i>Secrets Detection
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="IAC" 
+                                           id="domain-iac" checked>
+                                    <label class="form-check-label" for="domain-iac">
+                                        <i class="fas fa-cloud me-1"></i>IaC (Infrastructure)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="CONTAINERS" 
+                                           id="domain-containers" checked>
+                                    <label class="form-check-label" for="domain-containers">
+                                        <i class="fab fa-docker me-1"></i>Container Security
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="start-scan-btn">
+                    <i class="fas fa-play me-2"></i>Start Scan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,37 @@
+# Enhanced Opengrep SAST Tool Dependencies
+# Core AI and ML libraries
+transformers>=4.30.0
+torch>=2.0.0
+openai>=1.0.0
+numpy>=1.21.0
+
+# GitHub API integration
+PyGithub>=1.59.0
+requests>=2.28.0
+
+# Data processing and utilities
+pyyaml>=6.0
+click>=8.1.0
+dataclasses-json>=0.5.9
+python-dotenv>=1.0.0
+
+# Security and cryptography
+cryptography>=41.0.0
+bcrypt>=4.0.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Web dashboard dependencies
+flask>=3.0.0
+flask-cors>=4.0.0
+flask-socketio>=5.3.0
+gunicorn>=21.2.0
+
+# Optional: For advanced AI features
+sentence-transformers>=2.2.0  # For semantic code analysis
+scikit-learn>=1.3.0  # For ML-based vulnerability classification

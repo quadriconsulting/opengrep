@@ -228,3 +228,4 @@ result
 
 # User to hold Windows artifacts such as DLLs
 artifacts/
+opengrep-rules/

@@ -1,0 +1,56 @@
+{
+  "scan_id": "demo-scan-1755830558",
+  "timestamp": "2025-08-22T02:42:38.079789",
+  "repository": "demo_vulnerable_project",
+  "domains_scanned": [
+    "sast",
+    "secrets"
+  ],
+  "summary": {
+    "total_findings": 4,
+    "CRITICAL": 2,
+    "HIGH": 2,
+    "MEDIUM": 0,
+    "LOW": 0,
+    "auto_fixable": 4,
+    "auto_fix_coverage": "100.0%"
+  },
+  "findings": [
+    {
+      "id": "SAST-001",
+      "type": "SQL Injection",
+      "severity": "CRITICAL",
+      "file": "demo_vulnerable_project/sql_injection.py",
+      "line": 15,
+      "message": "Potential SQL injection vulnerability",
+      "auto_fix_available": true
+    },
+    {
+      "id": "SAST-002",
+      "type": "Cross-Site Scripting (XSS)",
+      "severity": "HIGH",
+      "file": "demo_vulnerable_project/xss_vulnerability.py",
+      "line": 12,
+      "message": "Reflected XSS vulnerability detected",
+      "auto_fix_available": true
+    },
+    {
+      "id": "SAST-003",
+      "type": "Command Injection",
+      "severity": "CRITICAL",
+      "file": "demo_vulnerable_project/command_injection.py",
+      "line": 10,
+      "message": "OS command injection vulnerability",
+      "auto_fix_available": true
+    },
+    {
+      "id": "SECRET-001",
+      "type": "Hardcoded API Key",
+      "severity": "HIGH",
+      "file": "demo_vulnerable_project/crypto_weakness.py",
+      "line": 8,
+      "message": "Hardcoded secret detected",
+      "auto_fix_available": true
+    }
+  ]
+}
