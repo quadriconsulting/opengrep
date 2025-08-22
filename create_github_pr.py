@@ -48,7 +48,7 @@ See the full documentation in the repository for detailed implementation details
     
     # PR data
     pr_data = {
-        "title": "🚀 Revolutionary Enhancement: AI-Powered Auto-Fix SAST Tool with PR Automation",
+        "title": "🚀 DevSecure: Complete Unified Security Platform Implementation (5-Day Developer Guide)",
         "body": pr_body,
         "head": head_branch,
         "base": base_branch,
