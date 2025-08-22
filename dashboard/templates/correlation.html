@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}DevSecure Correlation - Finding Relationships{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-project-diagram me-2 text-info"></i>Finding Correlation</h1>
+                <p class="text-muted mb-0">Visualize relationships and dependencies between security findings</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="reset-view-btn">
+                    <i class="fas fa-expand-arrows-alt me-2"></i>Reset View
+                </button>
+                <button class="btn btn-primary" id="analyze-btn">
+                    <i class="fas fa-sync-alt me-2"></i>Analyze Correlations
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correlation Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-info mb-2">
+                    <i class="fas fa-link fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="total-correlations">0</h3>
+                <p class="text-muted mb-0 small">Total Correlations</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-copy fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="duplicate-groups">0</h3>
+                <p class="text-muted mb-0 small">Duplicate Groups</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-danger mb-2">
+                    <i class="fas fa-chain-broken fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="related-chains">0</h3>
+                <p class="text-muted mb-0 small">Related Chains</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-success mb-2">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                <h3 class="mb-1" id="risk-clusters">0</h3>
+                <p class="text-muted mb-0 small">Risk Clusters</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correlation Controls and Filters -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter me-2"></i>Visualization Controls
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small">Correlation Type</label>
+                        <select class="form-select" id="correlation-type-filter">
+                            <option value="">All Types</option>
+                            <option value="DUPLICATE">Duplicates</option>
+                            <option value="RELATED">Related</option>
+                            <option value="CAUSAL">Causal</option>
+                            <option value="MITIGATING">Mitigating</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small">Minimum Severity</label>
+                        <select class="form-select" id="min-severity-filter">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="HIGH" selected>High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small">Domain Focus</label>
+                        <select class="form-select" id="domain-focus-filter">
+                            <option value="">All Domains</option>
+                            <option value="SAST">SAST</option>
+                            <option value="SCA">SCA</option>
+                            <option value="SECRETS">Secrets</option>
+                            <option value="IAC">IaC</option>
+                            <option value="CONTAINERS">Containers</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small">Layout</label>
+                        <select class="form-select" id="layout-type">
+                            <option value="force">Force Layout</option>
+                            <option value="circle">Circular</option>
+                            <option value="hierarchy">Hierarchical</option>
+                            <option value="cluster">Clustered</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label small">Node Size</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <small>Small</small>
+                            <input type="range" class="form-range" id="node-size-range" 
+                                   min="5" max="25" value="12" step="2">
+                            <small>Large</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label small">Link Strength</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <small>Weak</small>
+                            <input type="range" class="form-range" id="link-strength-range" 
+                                   min="0.1" max="2.0" value="0.5" step="0.1">
+                            <small>Strong</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="show-labels-checkbox" checked>
+                            <label class="form-check-label" for="show-labels-checkbox">
+                                Show Node Labels
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Legend
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-node severity-critical me-2"></div>
+                            <small>Critical</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-node severity-high me-2"></div>
+                            <small>High</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-node severity-medium me-2"></div>
+                            <small>Medium</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="correlation-legend-node severity-low me-2"></div>
+                            <small>Low</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-link duplicate me-2"></div>
+                            <small>Duplicate</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-link related me-2"></div>
+                            <small>Related</small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="correlation-legend-link causal me-2"></div>
+                            <small>Causal</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="correlation-legend-link mitigating me-2"></div>
+                            <small>Mitigating</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correlation Graph -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-sitemap me-2"></i>Correlation Graph
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" id="zoom-in-btn" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="zoom-out-btn" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" id="fit-view-btn" title="Fit to View">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body p-0 position-relative">
+                <!-- Loading indicator -->
+                <div id="correlation-loading" class="text-center py-5">
+                    <div class="loading-spinner me-2"></div>
+                    Analyzing correlations...
+                </div>
+                
+                <!-- Graph container -->
+                <div id="correlation-graph-container" style="height: 600px; display: none;">
+                    <svg id="correlation-graph" width="100%" height="600"></svg>
+                </div>
+                
+                <!-- Empty state -->
+                <div id="correlation-empty" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                    <h5>No Correlations Found</h5>
+                    <p class="text-muted">No relationships found between current findings. Try running a scan or adjusting filters.</p>
+                </div>
+                
+                <!-- Graph tooltip -->
+                <div id="graph-tooltip" class="position-absolute bg-dark text-white p-2 rounded shadow" 
+                     style="display: none; pointer-events: none; z-index: 1000; font-size: 0.875rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Selected Node Details Panel -->
+<div class="row mt-4" id="node-details-panel" style="display: none;">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-crosshairs me-2"></i>Selected Finding Details
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" id="close-details-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="node-details-content">
+                    <!-- Node details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correlation Analysis Modal -->
+<div class="modal fade" id="correlationAnalysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-brain me-2"></i>Correlation Analysis
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="loading-spinner me-2"></div>
+                    <p>Analyzing finding relationships using AI correlation engine...</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 0%" id="analysis-progress"></div>
+                    </div>
+                    <small class="text-muted" id="analysis-status">Initializing...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/correlation.js') }}"></script>
+{% endblock %}

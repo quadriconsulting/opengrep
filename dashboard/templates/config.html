@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+
+{% block title %}DevSecure Configuration - Platform Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-cog me-2 text-secondary"></i>Configuration</h1>
+                <p class="text-muted mb-0">Manage DevSecure platform settings and integrations</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="reset-config-btn">
+                    <i class="fas fa-undo me-2"></i>Reset to Defaults
+                </button>
+                <button class="btn btn-success" id="save-config-btn">
+                    <i class="fas fa-save me-2"></i>Save Configuration
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Sections -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="general-tab" data-bs-toggle="tab" 
+                                data-bs-target="#general" type="button" role="tab">
+                            <i class="fas fa-sliders-h me-2"></i>General
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-engines-tab" data-bs-toggle="tab" 
+                                data-bs-target="#security-engines" type="button" role="tab">
+                            <i class="fas fa-shield-alt me-2"></i>Security Engines
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ai-models-tab" data-bs-toggle="tab" 
+                                data-bs-target="#ai-models" type="button" role="tab">
+                            <i class="fas fa-brain me-2"></i>AI Models
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="integrations-tab" data-bs-toggle="tab" 
+                                data-bs-target="#integrations" type="button" role="tab">
+                            <i class="fas fa-plug me-2"></i>Integrations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" 
+                                data-bs-target="#notifications" type="button" role="tab">
+                            <i class="fas fa-bell me-2"></i>Notifications
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- General Settings -->
+                    <div class="tab-pane fade show active" id="general" role="tabpanel">
+                        <h6 class="mb-3">General Platform Settings</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Platform Name</label>
+                                <input type="text" class="form-control" id="platform-name" value="DevSecure">
+                                <div class="form-text">Display name for the platform</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Default Project Path</label>
+                                <input type="text" class="form-control" id="default-project-path" 
+                                       value="/home/user/projects">
+                                <div class="form-text">Default scan directory</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Max Concurrent Scans</label>
+                                <input type="number" class="form-control" id="max-concurrent-scans" 
+                                       value="3" min="1" max="10">
+                                <div class="form-text">Maximum simultaneous security scans</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Scan Timeout (minutes)</label>
+                                <input type="number" class="form-control" id="scan-timeout" 
+                                       value="30" min="5" max="120">
+                                <div class="form-text">Maximum time for individual scans</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Auto-Fix Coverage Target</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="autofix-coverage" 
+                                           value="80" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Target percentage for automatic fixes</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Dashboard Theme</label>
+                                <select class="form-select" id="dashboard-theme">
+                                    <option value="light" selected>Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto (System)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h6 class="mb-3">Performance Settings</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="parallel-scanning" checked>
+                                    <label class="form-check-label" for="parallel-scanning">
+                                        Enable Parallel Scanning
+                                    </label>
+                                </div>
+                                <div class="form-text">Run multiple security engines simultaneously</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="incremental-scanning" checked>
+                                    <label class="form-check-label" for="incremental-scanning">
+                                        Incremental Scanning
+                                    </label>
+                                </div>
+                                <div class="form-text">Only scan changed files</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="cache-results" checked>
+                                    <label class="form-check-label" for="cache-results">
+                                        Cache Scan Results
+                                    </label>
+                                </div>
+                                <div class="form-text">Cache results for faster subsequent scans</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="smart-correlation" checked>
+                                    <label class="form-check-label" for="smart-correlation">
+                                        Smart Correlation
+                                    </label>
+                                </div>
+                                <div class="form-text">AI-powered finding correlation analysis</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Engines -->
+                    <div class="tab-pane fade" id="security-engines" role="tabpanel">
+                        <h6 class="mb-3">Security Engine Configuration</h6>
+                        
+                        <!-- SAST Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-code me-2 text-primary"></i>SAST (Static Analysis)
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="sast-enabled" checked>
+                                        <label class="form-check-label" for="sast-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Primary Engine</label>
+                                        <select class="form-select" id="sast-primary-engine">
+                                            <option value="opengrep" selected>Enhanced Opengrep</option>
+                                            <option value="semgrep">Semgrep</option>
+                                            <option value="codeql">CodeQL</option>
+                                            <option value="sonarqube">SonarQube</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Rule Strictness</label>
+                                        <select class="form-select" id="sast-strictness">
+                                            <option value="strict">Strict</option>
+                                            <option value="balanced" selected>Balanced</option>
+                                            <option value="permissive">Permissive</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Custom Rules Path</label>
+                                        <input type="text" class="form-control" id="sast-custom-rules" 
+                                               value="./custom-rules">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Excluded Paths</label>
+                                        <input type="text" class="form-control" id="sast-excluded-paths" 
+                                               value="node_modules,vendor,build">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SCA Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cube me-2 text-success"></i>SCA (Software Composition Analysis)
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="sca-enabled" checked>
+                                        <label class="form-check-label" for="sca-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Primary Engine</label>
+                                        <select class="form-select" id="sca-primary-engine">
+                                            <option value="safety" selected>Safety</option>
+                                            <option value="npm-audit">npm audit</option>
+                                            <option value="snyk">Snyk</option>
+                                            <option value="owasp-dependency-check">OWASP Dependency Check</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">CVSS Threshold</label>
+                                        <select class="form-select" id="sca-cvss-threshold">
+                                            <option value="0">All (0.0+)</option>
+                                            <option value="4">Medium (4.0+)</option>
+                                            <option value="7" selected>High (7.0+)</option>
+                                            <option value="9">Critical (9.0+)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sca-update-check" checked>
+                                            <label class="form-check-label" for="sca-update-check">
+                                                Check for Updates
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sca-license-check">
+                                            <label class="form-check-label" for="sca-license-check">
+                                                License Compliance Check
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Secrets Configuration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-key me-2 text-danger"></i>Secrets Detection
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="secrets-enabled" checked>
+                                        <label class="form-check-label" for="secrets-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Detection Engine</label>
+                                        <select class="form-select" id="secrets-engine">
+                                            <option value="builtin" selected>Built-in Patterns</option>
+                                            <option value="gitleaks">GitLeaks</option>
+                                            <option value="truffleHog">TruffleHog</option>
+                                            <option value="detect-secrets">detect-secrets</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Entropy Threshold</label>
+                                        <input type="number" class="form-control" id="secrets-entropy" 
+                                               value="4.5" step="0.1" min="3" max="8">
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label">Additional Patterns</label>
+                                        <textarea class="form-control" id="secrets-patterns" rows="3" 
+                                                  placeholder="Enter custom regex patterns, one per line">api[_-]?key\s*[:=]\s*[a-zA-Z0-9]+
+secret[_-]?key\s*[:=]\s*[a-zA-Z0-9]+</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Models -->
+                    <div class="tab-pane fade" id="ai-models" role="tabpanel">
+                        <h6 class="mb-3">AI Model Configuration</h6>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Configure AI models for auto-fix generation and analysis
+                        </div>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Primary AI Provider</label>
+                                <select class="form-select" id="ai-provider">
+                                    <option value="openai" selected>OpenAI</option>
+                                    <option value="anthropic">Anthropic Claude</option>
+                                    <option value="huggingface">Hugging Face</option>
+                                    <option value="local">Local Model</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Model Version</label>
+                                <select class="form-select" id="ai-model-version">
+                                    <option value="gpt-4" selected>GPT-4</option>
+                                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">API Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="ai-api-key" 
+                                           placeholder="Enter API key">
+                                    <button class="btn btn-outline-secondary" type="button" id="test-api-key">
+                                        <i class="fas fa-vial"></i> Test
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Request Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="ai-timeout" 
+                                       value="30" min="10" max="300">
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-3">Fix Generation Settings</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Minimum Confidence Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="ai-confidence-threshold" 
+                                           value="75" min="0" max="100">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Max Retries</label>
+                                <input type="number" class="form-control" id="ai-max-retries" 
+                                       value="3" min="1" max="10">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="ai-context-aware" checked>
+                                    <label class="form-check-label" for="ai-context-aware">
+                                        Context-Aware Fixes
+                                    </label>
+                                </div>
+                                <div class="form-text">Include surrounding code context</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="ai-test-generation" checked>
+                                    <label class="form-check-label" for="ai-test-generation">
+                                        Generate Tests
+                                    </label>
+                                </div>
+                                <div class="form-text">Auto-generate unit tests for fixes</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Integrations -->
+                    <div class="tab-pane fade" id="integrations" role="tabpanel">
+                        <h6 class="mb-3">External Integrations</h6>
+                        
+                        <!-- GitHub Integration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-github me-2"></i>GitHub Integration
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="github-enabled" checked>
+                                        <label class="form-check-label" for="github-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Personal Access Token</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" id="github-token" 
+                                                   placeholder="ghp_...">
+                                            <button class="btn btn-outline-secondary" type="button" id="test-github">
+                                                <i class="fas fa-vial"></i> Test
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Default Repository</label>
+                                        <input type="text" class="form-control" id="github-repo" 
+                                               placeholder="owner/repository">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">PR Branch Prefix</label>
+                                        <input type="text" class="form-control" id="github-branch-prefix" 
+                                               value="devsecure/autofix">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="github-auto-merge" checked>
+                                            <label class="form-check-label" for="github-auto-merge">
+                                                Auto-merge High Confidence Fixes
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Slack Integration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-slack me-2"></i>Slack Integration
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="slack-enabled">
+                                        <label class="form-check-label" for="slack-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Webhook URL</label>
+                                        <input type="url" class="form-control" id="slack-webhook" 
+                                               placeholder="https://hooks.slack.com/services/...">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Default Channel</label>
+                                        <input type="text" class="form-control" id="slack-channel" 
+                                               placeholder="#security" value="#security">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Jira Integration -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-jira me-2"></i>Jira Integration
+                                    </h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="jira-enabled">
+                                        <label class="form-check-label" for="jira-enabled">Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Server URL</label>
+                                        <input type="url" class="form-control" id="jira-url" 
+                                               placeholder="https://company.atlassian.net">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Project Key</label>
+                                        <input type="text" class="form-control" id="jira-project" 
+                                               placeholder="SEC">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Username/Email</label>
+                                        <input type="text" class="form-control" id="jira-username" 
+                                               placeholder="user@company.com">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">API Token</label>
+                                        <input type="password" class="form-control" id="jira-token" 
+                                               placeholder="API token">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="tab-pane fade" id="notifications" role="tabpanel">
+                        <h6 class="mb-3">Notification Settings</h6>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Email Notifications</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="email-enabled" checked>
+                                            <label class="form-check-label" for="email-enabled">
+                                                Enable Email Notifications
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">SMTP Server</label>
+                                            <input type="text" class="form-control" id="smtp-server" 
+                                                   placeholder="smtp.gmail.com">
+                                        </div>
+                                        
+                                        <div class="row g-2">
+                                            <div class="col-8">
+                                                <label class="form-label">From Email</label>
+                                                <input type="email" class="form-control" id="from-email" 
+                                                       placeholder="devsecure@company.com">
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label">Port</label>
+                                                <input type="number" class="form-control" id="smtp-port" 
+                                                       value="587">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Notification Events</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="notify-scan-complete" checked>
+                                            <label class="form-check-label" for="notify-scan-complete">
+                                                Scan Completion
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="notify-critical-findings" checked>
+                                            <label class="form-check-label" for="notify-critical-findings">
+                                                Critical Findings Detected
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="notify-autofix-success" checked>
+                                            <label class="form-check-label" for="notify-autofix-success">
+                                                Auto-fix Success
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="notify-autofix-failure">
+                                            <label class="form-check-label" for="notify-autofix-failure">
+                                                Auto-fix Failures
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="notify-pr-merged" checked>
+                                            <label class="form-check-label" for="notify-pr-merged">
+                                                PR Merged
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="notify-system-errors" checked>
+                                            <label class="form-check-label" for="notify-system-errors">
+                                                System Errors
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Status Modal -->
+<div class="modal fade" id="configStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-save me-2"></i>Configuration Status
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="config-status-content">
+                    <!-- Status content will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/config.js') }}"></script>
+{% endblock %}

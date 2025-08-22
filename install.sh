@@ -1,347 +1,321 @@
-#!/usr/bin/env bash 
-# Opengrep installation script
+#!/bin/bash
 
-set -euo pipefail
+# Enhanced Opengrep SAST Tool Installation Script
+# ===============================================
 
-if [[ "$0" == "bash" || "$0" == "-bash" ]]; then
-  SCRIPT_NAME="install.sh (via stdin)"
-else
-  SCRIPT_NAME="$0"
-fi
+set -e  # Exit on any error
 
-print_usage() {
-    echo "Usage:"
-    echo "  $SCRIPT_NAME [-v <version>] [--verify-signatures]"
-    echo "      Install the latest or specified version (default: latest)"
-    echo
-    echo "  $SCRIPT_NAME -l"
-    echo "      List the latest 3 available versions"
-    echo
-    echo "  $SCRIPT_NAME -h"
-    echo "      Show this help message"
-    echo
-    echo "Options:"
-    printf "  %-22s %s\n" "-v <version>" "Specify version to install (optional)"
-    printf "  %-22s %s\n" "--verify-signatures" "Require Cosign verification of signature"
-    printf "  %-22s %s\n" "-l" "List latest 3 versions (no install)"
-    printf "  %-22s %s\n" "-h" "Display help (no install)"
-    echo
-    echo "Notes:"
-    echo "  - '--verify-signatures' can be used with or without '-v'."
-    echo "  - '-l' and '-h' cannot be combined with other options."
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+PYTHON_MIN_VERSION="3.8"
+REPO_URL="https://github.com/quadriconsulting/enhanced-opengrep.git"
+INSTALL_DIR="$HOME/.enhanced-opengrep"
+BIN_DIR="$HOME/.local/bin"
+
+echo -e "${BLUE}🚀 Enhanced Opengrep SAST Tool Installer${NC}"
+echo "============================================="
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}✓${NC} $1"
 }
 
-check_has_curl() {
-    command -v curl > /dev/null 2>&1 || {
-        echo >&2 "Required tool curl could not be found. Aborting."
+print_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+# Check if Python is installed and meets minimum version
+check_python() {
+    print_info "Checking Python installation..."
+    
+    if ! command -v python3 &> /dev/null; then
+        print_error "Python 3 is not installed. Please install Python 3.8 or higher."
         exit 1
-    }
-}
-
-# Function to get available versions - already checked when running main
-get_available_versions() {
-    check_has_curl
-    curl -s https://api.github.com/repos/opengrep/opengrep/releases |
-        grep '"tag_name":' |
-        sed -E 's/.*"([^"]+)".*/\1/'
-}
-
-# Function to validate version
-validate_version() {
-    local VERSION="$1"
-    local AVAILABLE_VERSIONS
-    AVAILABLE_VERSIONS=$(get_available_versions)
-    if echo "$AVAILABLE_VERSIONS" | grep -q "^$VERSION$"; then
-        return 0
+    fi
+    
+    PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    
+    if python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)"; then
+        print_status "Python $PYTHON_VERSION found (>= $PYTHON_MIN_VERSION required)"
     else
-        echo "Error: Version $VERSION not found"
-        echo "Available versions (latest 3):"
-        echo "$AVAILABLE_VERSIONS" | head -3
+        print_error "Python $PYTHON_VERSION found, but $PYTHON_MIN_VERSION or higher is required"
         exit 1
     fi
 }
 
-# pre: $SIG_EXISTS == "true"
-validate_signature() {
-    local P="$1"
-    if $HAS_COSIGN; then
-        echo "Verifying signatures for ${P}/opengrep.cert"
-        if cosign verify-blob \
-            --cert "$P/opengrep.cert" \
-            --signature "${P}/opengrep.sig" \
-            --certificate-identity-regexp "https://github.com/opengrep/opengrep.+" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${P}/opengrep"; then
-            echo "Signature valid."
-        else
-            # if we have signatures and we also have cosign installed, then always
-            # verify, even without --verify-signatures.
-            echo "Error: Signature validation error."
-            exit 1
+# Check if pip is installed
+check_pip() {
+    print_info "Checking pip installation..."
+    
+    if ! command -v pip3 &> /dev/null; then
+        print_error "pip3 is not installed. Please install pip3."
+        exit 1
+    fi
+    
+    print_status "pip3 found"
+}
+
+# Check if git is installed
+check_git() {
+    print_info "Checking git installation..."
+    
+    if ! command -v git &> /dev/null; then
+        print_error "git is not installed. Please install git."
+        exit 1
+    fi
+    
+    print_status "git found"
+}
+
+# Check if opengrep is installed
+check_opengrep() {
+    print_info "Checking Opengrep installation..."
+    
+    if command -v opengrep &> /dev/null; then
+        OPENGREP_VERSION=$(opengrep --version 2>&1 | head -n1 || echo "unknown")
+        print_status "Opengrep found: $OPENGREP_VERSION"
+    else
+        print_warning "Opengrep not found in PATH"
+        print_info "You can install Opengrep from: https://github.com/opengrep/opengrep"
+        print_info "Or the installer will guide you to install it later"
+    fi
+}
+
+# Create necessary directories
+create_directories() {
+    print_info "Creating installation directories..."
+    
+    mkdir -p "$INSTALL_DIR"
+    mkdir -p "$BIN_DIR"
+    
+    print_status "Directories created"
+}
+
+# Install the enhanced SAST tool
+install_enhanced_sast() {
+    print_info "Installing Enhanced Opengrep SAST Tool..."
+    
+    # Create virtual environment
+    print_info "Creating Python virtual environment..."
+    python3 -m venv "$INSTALL_DIR/venv"
+    
+    # Activate virtual environment
+    source "$INSTALL_DIR/venv/bin/activate"
+    
+    # Upgrade pip
+    pip install --upgrade pip
+    
+    # Copy the current directory contents or clone from repo
+    if [ -f "enhanced_autofix_sast.py" ]; then
+        print_info "Installing from current directory..."
+        cp -r . "$INSTALL_DIR/src"
+    else
+        print_info "Cloning from repository..."
+        git clone "$REPO_URL" "$INSTALL_DIR/src"
+    fi
+    
+    # Install Python dependencies
+    print_info "Installing Python dependencies..."
+    cd "$INSTALL_DIR/src"
+    pip install -r requirements.txt
+    
+    # Install the package
+    pip install -e .
+    
+    print_status "Enhanced SAST tool installed"
+}
+
+# Create wrapper script
+create_wrapper_script() {
+    print_info "Creating wrapper script..."
+    
+    cat > "$BIN_DIR/enhanced-opengrep" << EOF
+#!/bin/bash
+# Enhanced Opengrep SAST Tool Wrapper Script
+
+# Activate virtual environment
+source "$INSTALL_DIR/venv/bin/activate"
+
+# Run the enhanced SAST tool
+python3 "$INSTALL_DIR/src/enhanced_autofix_sast.py" "\$@"
+EOF
+    
+    chmod +x "$BIN_DIR/enhanced-opengrep"
+    
+    # Create shorter alias
+    ln -sf "$BIN_DIR/enhanced-opengrep" "$BIN_DIR/eogrep"
+    
+    print_status "Wrapper scripts created: enhanced-opengrep, eogrep"
+}
+
+# Clone opengrep-rules if not present
+setup_rules() {
+    print_info "Setting up Opengrep rules..."
+    
+    if [ ! -d "$INSTALL_DIR/src/opengrep-rules" ]; then
+        print_info "Cloning opengrep-rules repository..."
+        cd "$INSTALL_DIR/src"
+        git clone https://github.com/quadriconsulting/opengrep-rules.git
+    else
+        print_info "Updating opengrep-rules repository..."
+        cd "$INSTALL_DIR/src/opengrep-rules"
+        git pull
+    fi
+    
+    print_status "Opengrep rules configured"
+}
+
+# Update PATH if necessary
+update_path() {
+    print_info "Updating PATH..."
+    
+    # Check if BIN_DIR is already in PATH
+    if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+        # Add to bash profile
+        if [ -f "$HOME/.bashrc" ]; then
+            echo "export PATH=\"$BIN_DIR:\$PATH\"" >> "$HOME/.bashrc"
+            print_status "Added $BIN_DIR to ~/.bashrc"
         fi
+        
+        # Add to zsh profile if it exists
+        if [ -f "$HOME/.zshrc" ]; then
+            echo "export PATH=\"$BIN_DIR:\$PATH\"" >> "$HOME/.zshrc"
+            print_status "Added $BIN_DIR to ~/.zshrc"
+        fi
+        
+        # Export for current session
+        export PATH="$BIN_DIR:$PATH"
+        
+        print_status "PATH updated"
     else
-      echo "Warning: cosign needed for signature validation; the package will still be installed."
-      echo "If this was not intended, delete and rerun with --verify-signatures or install cosign."
+        print_status "PATH already configured"
     fi
 }
 
-# carefully cleanup the expected files; we don't want a programming error to run
-# rm -rf on any directory that is not intended...
-cleanup_on_failure() {
-    local P="$1"
-    echo "An error occurred during the installation. Cleaning up ${P}..."
-    rm -f "${P}/opengrep" || true
-    rm -f "${P}/opengrep.sig" || true
-    rm -f "${P}/opengrep.cert" || true
-    rmdir "${P}" || true
-    exit 1
+# Create default configuration
+create_config() {
+    print_info "Creating default configuration..."
+    
+    CONFIG_DIR="$HOME/.config/enhanced-opengrep"
+    mkdir -p "$CONFIG_DIR"
+    
+    if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
+        cp "$INSTALL_DIR/src/config.yaml" "$CONFIG_DIR/config.yaml"
+        print_status "Default configuration created at $CONFIG_DIR/config.yaml"
+    else
+        print_info "Configuration already exists at $CONFIG_DIR/config.yaml"
+    fi
 }
 
+# Install Opengrep if not present
+install_opengrep() {
+    if ! command -v opengrep &> /dev/null; then
+        print_warning "Opengrep not found. Would you like to install it? (y/N)"
+        read -r response
+        
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            print_info "Installing Opengrep..."
+            
+            # Install using the official installer
+            if command -v curl &> /dev/null; then
+                curl -fsSL https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash
+            elif command -v wget &> /dev/null; then
+                wget -qO- https://raw.githubusercontent.com/opengrep/opengrep/main/install.sh | bash
+            else
+                print_error "Neither curl nor wget found. Please install Opengrep manually."
+                print_info "Visit: https://github.com/opengrep/opengrep"
+                exit 1
+            fi
+            
+            print_status "Opengrep installed"
+        else
+            print_warning "Skipping Opengrep installation. You'll need to install it manually."
+        fi
+    fi
+}
+
+# Run tests to verify installation
+run_tests() {
+    print_info "Running installation tests..."
+    
+    # Test wrapper script
+    if "$BIN_DIR/enhanced-opengrep" --help &> /dev/null; then
+        print_status "Wrapper script test passed"
+    else
+        print_error "Wrapper script test failed"
+        return 1
+    fi
+    
+    # Test Python imports
+    source "$INSTALL_DIR/venv/bin/activate"
+    if python3 -c "import enhanced_autofix_sast; print('✓ Import test passed')" 2>/dev/null; then
+        print_status "Python import test passed"
+    else
+        print_error "Python import test failed"
+        return 1
+    fi
+    
+    print_status "All tests passed"
+}
+
+# Main installation process
 main() {
-    local VERSION="$1"
-    local VERIFY_SIGNATURES="$2"
-    PREFIX="${HOME}/.opengrep/cli"
-    INST="${PREFIX}/${VERSION}"
-    LATEST="${PREFIX}/latest"
-
-    OS="${OS:-$(uname -s)}"
-    ARCH="${ARCH:-$(uname -m)}"
-    DIST=""
-
-    check_has_curl
-
-    # check and set "os_arch"
-    if [ "$OS" = "Linux" ]; then
-        if ldd /bin/sh 2>&1 | grep -qi musl; then
-            if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
-                DIST="opengrep_musllinux_x86"
-            elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-                DIST="opengrep_musllinux_aarch64"
-            fi
-        else
-            if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
-                DIST="opengrep_manylinux_x86"
-            elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-                DIST="opengrep_manylinux_aarch64"
-            fi
-        fi
-    elif [ "$OS" = "Darwin" ]; then
-        if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then
-            DIST="opengrep_osx_x86"
-        elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-            DIST="opengrep_osx_arm64"
-        fi
-    fi
-
-    if [ -z "${DIST}" ]; then
-        echo "Operating system '${OS}' / architecture '${ARCH}' is unsupported." 1>&2
+    echo
+    print_info "Starting installation process..."
+    echo
+    
+    # Prerequisites
+    check_python
+    check_pip
+    check_git
+    check_opengrep
+    
+    echo
+    
+    # Installation
+    create_directories
+    install_enhanced_sast
+    create_wrapper_script
+    setup_rules
+    update_path
+    create_config
+    install_opengrep
+    
+    echo
+    
+    # Verification
+    if run_tests; then
+        echo
+        print_status "🎉 Enhanced Opengrep SAST Tool installed successfully!"
+        echo
+        print_info "Usage examples:"
+        echo "  enhanced-opengrep scan /path/to/code"
+        echo "  eogrep scan . --github-token TOKEN --repo owner/repo"
+        echo
+        print_info "Configuration file: $HOME/.config/enhanced-opengrep/config.yaml"
+        print_info "Installation directory: $INSTALL_DIR"
+        echo
+        print_warning "Please restart your terminal or run: source ~/.bashrc"
+        echo
+    else
+        print_error "Installation completed with errors. Please check the output above."
         exit 1
-    fi
-
-    URL="https://github.com/opengrep/opengrep/releases/download/${VERSION}/${DIST}"
-
-    # check if binary already exists
-    if [ -f "${INST}/opengrep" ]; then
-        echo "Destination binary ${INST}/opengrep already exists."
-        rm -f "${LATEST}" || exit 1
-        ln -s "${INST}" "${LATEST}" || exit 1
-        echo "Updated symlink from ${LATEST}/opengrep to point to ${INST}/opengrep."
-        if $VERIFY_SIGNATURES; then
-            echo "Signature verification skipped for existing installation."
-        fi
-    else
-        echo
-        echo "*** Installing Opengrep ${VERSION} for ${OS} (${ARCH}) ***"
-
-        # cleanup on error
-        trap '[ "$?" -eq 0 ] || cleanup_on_failure $INST' EXIT
-
-        mkdir -p "${INST}"
-        if [ ! -d "${INST}" ]; then
-            echo "Failed to create install directory ${INST}." 1>&2
-            exit 1
-        fi
-
-        curl --fail --location --progress-bar "${URL}" > "${INST}/opengrep"
-
-        local SIG_EXISTS=true
-
-        # Try downloading .cert
-        CERT_STATUS=$(curl --location --silent --show-error --write-out "%{http_code}" \
-            --output "${INST}/opengrep.cert" "${URL}.cert")
-
-        if [[ "$CERT_STATUS" == "404" ]]; then
-            SIG_EXISTS=false
-            rm -f "${INST}/opengrep.cert" # It's there but contains "Not found".
-            echo "Warning: Certificate file not found at ${URL}.cert"
-        elif [[ "$CERT_STATUS" != 200 ]]; then
-          echo "Error: Failed to download ${URL}.cert: HTTP status $CERT_STATUS."
-          exit 1
-        else
-            # Only attempt .sig if .cert was found
-            SIG_STATUS=$(curl --location --silent --show-error --write-out "%{http_code}" \
-                --output "${INST}/opengrep.sig" "${URL}.sig")
-
-            if [[ "$SIG_STATUS" == "404" ]]; then
-                SIG_EXISTS=false
-                echo "Error: Signature file not found at ${URL}.sig, but ${URL}.cert was found."
-                exit 1  # we downloaded .cert, so exit with error
-            elif [[ "$SIG_STATUS" != 200 ]]; then
-              echo "Error: Failed to download ${URL}.sig: HTTP status $SIG_STATUS."
-              exit 1
-            fi
-        fi
-
-        # check signature if SIG_EXIST
-        if [[ "$SIG_EXISTS" == true ]]; then
-            validate_signature "${INST}"
-        else
-            if [[ "$VERIFY_SIGNATURES" == true ]]; then
-                echo "Error: No signature / certificate found for ${VERSION} but --verify-signatures was requested."
-                echo "Error: It is likely that signature verification was added after this version."
-                exit 1
-            else
-                echo "Warning: No signature / certificate found for ${VERSION}. Skipping signature verification."
-                echo "Warning: The package will still be installed. It is likely that signature verification was added after this version."
-            fi
-        fi
-
-        # make executable by all users
-        chmod a+x "${INST}/opengrep" || exit 1
-
-        if [ ! -f "${INST}/opengrep" ]; then
-            echo "Failed to download binary at ${INST}/opengrep" 1>&2
-            exit 1
-        fi
-
-        echo "Testing binary..."
-        # Test by calling --version on the downloaded binary
-        TEST=$("${INST}/opengrep" --version 2> /dev/null || true)
-        if [ -z "$TEST" ]; then
-            echo "Failed to execute installed binary: ${INST}/opengrep." 1>&2
-            exit 1
-        fi
-
-        echo
-        echo "Successfully installed Opengrep binary at ${INST}/opengrep"
-
-        rm -f "${LATEST}" || exit 1
-        ln -s "${INST}" "${LATEST}" || exit 1
-        echo "with a symlink from ${LATEST}/opengrep"
-    fi
-
-    LOCALBIN="${HOME}/.local/bin"
-
-    # Only need to create the symlink from .local/bin once if not created before.
-    # For all subsequent installations, the ./local/bin symlink will still point
-    # to the updated symlink (created above).
-    if [ -d "${LOCALBIN}" ] && [ -w "${LOCALBIN}" ]; then
-        # Only create the symlink if it doesn't already exist
-        if [ ! -f "${LOCALBIN}/opengrep" ]; then
-            ln -s "${LATEST}/opengrep" "${LOCALBIN}/opengrep"
-            echo "Created symlink from ${LOCALBIN}/opengrep to ${LATEST}/opengrep"
-        fi
-
-        echo
-        echo "To launch Opengrep now, type:"
-        # Do not assume that ~/.local/bin is in the PATH even if it exists,
-        # as it is not always the case.
-        if echo "$PATH" | tr ':' '\n' | grep -Fxq "$HOME/.local/bin"; then
-            echo "opengrep"
-        else
-            echo "${LOCALBIN}/opengrep"
-        fi
-        echo
-    else
-        echo
-        echo "To launch Opengrep now, type:"
-        echo "${LATEST}/opengrep"
-        echo
-        echo "Hint: Append the following line to your shell profile:"
-        echo "export PATH='${LATEST}':\$PATH"
-        echo
     fi
 }
 
-# Argument parsing
-if command -v cosign &> /dev/null; then
-    HAS_COSIGN=true
-    COSIGN_MAJOR_VERSION=$(cosign version | grep GitVersion | sed 's/GitVersion:[[:space:]]*//' | grep -oE '^[0-9]+')
-    if [[ "$COSIGN_MAJOR_VERSION" -lt 2 ]]; then
-        echo "Warning: cosign version is less than 2.0.0, signature validation may fail."
-    fi;
-else
-    HAS_COSIGN=false
-fi
-
-HELP=false
-LIST=false
-VERIFY_SIGNATURES=false
-VERSION=""
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -h)
-            HELP=true
-            shift
-            ;;
-        -l)
-            LIST=true
-            shift
-            ;;
-        --verify-signatures)
-            VERIFY_SIGNATURES=true
-            shift
-            ;;
-        -v)
-            if [[ -z "${2-}" ]] || ! [[ -n "$2" && "$2" != -* ]]; then
-                echo "Error: -v requires a version argument."
-                exit 1
-            else
-                VERSION="$2"
-                shift 2
-            fi
-            ;;
-        *)
-            echo "Error: Unknown option: $1."
-            print_usage
-            exit 1
-            ;;
-    esac
-done
-
-if { { $VERIFY_SIGNATURES || [[ -n "$VERSION" ]] || $LIST; } && $HELP; } || { { $VERIFY_SIGNATURES || [[ -n "$VERSION" ]] || $HELP; } && $LIST; }; then
-    echo "Error: incorrect arguments:"
-    print_usage
-    exit 1
-fi
-
-if $VERIFY_SIGNATURES && ! $HAS_COSIGN; then
-    echo "Error: cosign is required for --verify-signatures but is not installed."
-    echo "Go to https://github.com/sigstore/cosign to install it or run without the --verify-signatures flag to install without signature verification."
-    exit 1
-elif ! $HAS_COSIGN; then
-    echo "Warning: cosign is required for --verify-signatures but is not installed. Skipping signature validation."
-    echo "Go to https:/github.com/sigstore/cosign to install it."
-fi
-
-if "$HELP"; then
-    print_usage
-    exit 0
-fi
-
-if $LIST; then
-    echo "Available versions (latest 3):"
-    get_available_versions | head -3
-    exit 0
-fi
-
-shift $((OPTIND - 1))
-
-if [ -z "$VERSION" ]; then
-    VERSION=$(get_available_versions | head -1)
-else
-    validate_version "$VERSION"
-fi
-
-main "$VERSION" "$VERIFY_SIGNATURES"
+# Run main function
+main "$@"

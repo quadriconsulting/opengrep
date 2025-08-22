@@ -1,0 +1,54 @@
+# Enhanced Opengrep Dependencies
+# Core AI and ML libraries
+openai>=1.0.0
+anthropic>=0.8.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
+
+# GitHub integration
+PyGithub>=1.59.0
+requests>=2.28.0
+
+# Data processing and analysis
+pandas>=1.3.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Database and storage
+sqlite3  # Built-in with Python
+sqlalchemy>=1.4.0
+
+# Code analysis and AST manipulation
+ast  # Built-in with Python
+astroid>=2.12.0
+libcst>=0.4.0
+
+# Configuration and utilities
+click>=8.0.0
+pyyaml>=6.0
+python-dotenv>=0.19.0
+pathlib2>=2.3.6
+typing-extensions>=4.0.0
+
+# Security and crypto
+cryptography>=37.0.0
+hashlib  # Built-in with Python
+
+# Logging and monitoring
+structlog>=22.1.0
+rich>=12.0.0
+
+# Testing (for fix validation)
+pytest>=7.0.0
+pytest-asyncio>=0.19.0
+pytest-mock>=3.8.0
+
+# Original Opengrep dependencies (from main project)
+# These would be imported from the main opengrep installation
+# semgrep>=1.45.0
+
+# Development dependencies
+black>=22.0.0
+flake8>=5.0.0
+mypy>=0.991
+pre-commit>=2.20.0
